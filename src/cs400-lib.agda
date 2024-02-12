@@ -28,6 +28,12 @@ _orb_ true _ = true
 _orb_ false true = true
 _orb_ false false = false
 
+eqb : Bool -> Bool -> Bool
+eqb true true = true
+eqb false false = true
+eqb _ _ = false
+
+
 ----------------------------------------------------------------------
 -- Natural Numbers
 
@@ -85,9 +91,14 @@ data List A : Set where
   [] : List A
   _::_ : A -> List A -> List A
 
-all : {A : Set} -> (A -> Bool) -> List A -> Bool
-all f [] = true
-all f (x :: l) = andb (f x) (all f l)
+module Lists where
+  map : {A B : Set} -> (A -> B) -> List A -> List B
+  map f [] = []
+  map f (x :: xs) = f x :: map f xs
+
+  all : {A : Set} -> (A -> Bool) -> List A -> Bool
+  all f [] = true
+  all f (x :: l) = andb (f x) (all f l)
 
 ----------------------------------------------------------------------
 -- Products
@@ -156,3 +167,11 @@ isTrue false = Empty
 isFalse : Bool -> Set
 isFalse true = Empty
 isFalse false = Unit
+
+----------------------------------------------------------------------
+-- Maybe
+
+data Maybe A : Set where
+  Nothing : Maybe A
+  Just : A -> Maybe A
+
