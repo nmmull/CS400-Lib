@@ -7,32 +7,46 @@ data Bool : Set where
   true : Bool
   false : Bool
 
-notb : Bool -> Bool
-notb true = false
-notb false = true
+module Bools where
+  not : Bool -> Bool
+  not true = false
+  not false = true
 
-andb : Bool -> Bool -> Bool
-andb false _ = false
-andb true true = true
-andb true false = false
+  and : Bool -> Bool -> Bool
+  and false _ = false
+  and true true = true
+  and true false = false
 
-infixr 6 _&&_
+  or : Bool -> Bool -> Bool
+  or true _ = true
+  or false true = true
+  or false false = false
 
-_&&_ : Bool -> Bool -> Bool
-b && c = andb b c
+  eq : Bool -> Bool -> Bool
+  eq true true = true
+  eq false false = true
+  eq _ _ = false
+
+  xor : Bool -> Bool -> Bool
+  xor true true = false
+  xor true false = true
+  xor false true = true
+  xor false false = false
+
+  infix 4 _==_
+  _==_ = eq
+
+notb = Bools.not
+andb = Bools.and
+eqb = Bools.eq
+orb = Bools.or
+xorb = Bools.xor
 
 infixr 5 _orb_
+infixr 6 _&&_
 
-_orb_ : Bool -> Bool -> Bool
-_orb_ true _ = true
-_orb_ false true = true
-_orb_ false false = false
-
-eqb : Bool -> Bool -> Bool
-eqb true true = true
-eqb false false = true
-eqb _ _ = false
-
+_&&_ = Bools.and
+_orb_ = Bools.or
 
 ----------------------------------------------------------------------
 -- Natural Numbers
@@ -42,57 +56,74 @@ data Nat : Set where
   suc : Nat -> Nat
 {-# BUILTIN NATURAL Nat #-}
 
+module Nats where
+  eq : Nat -> Nat -> Bool
+  eq zero zero = true
+  eq zero (suc n) = false
+  eq (suc n) zero = false
+  eq (suc m) (suc n) = eq m n
+
+  neq : Nat -> Nat -> Bool
+  neq m n = notb (eq m n)
+
+  leq : Nat -> Nat -> Bool
+  leq zero n = true
+  leq (suc m) zero = false
+  leq (suc m) (suc n) = leq m n
+
+  lt : Nat -> Nat -> Bool
+  lt m n = leq m n && neq m n
+
+  max : Nat -> Nat -> Nat
+  max zero n = n
+  max (suc m) zero = (suc m)
+  max (suc m) (suc n) = suc (max m n)
+
+  min : Nat -> Nat -> Nat
+  min m zero = zero
+  min zero (suc _) = zero
+  min (suc m) (suc n) = suc (min m n)
+
+  add : Nat -> Nat -> Nat
+  add zero n = n
+  add (suc m) n = suc (add m n)
+
+  mul : Nat -> Nat -> Nat
+  mul zero n = zero
+  mul (suc m) n = add n (mul m n)
+
+  sub : Nat -> Nat -> Nat
+  sub zero _ = zero
+  sub (suc m) zero = (suc m)
+  sub (suc m) (suc n) = sub m n
+
 infix 4 _<_ _<=_ _==_
 
-_<=_ : Nat -> Nat -> Bool
-zero <= n = true
-suc m <= zero = false
-suc m <= suc n = m <= n
+_==_ = Nats.eq
+_<=_ = Nats.leq
+_<_ = Nats.lt
 
-_==_ : Nat -> Nat -> Bool
-zero == zero = true
-zero == suc n = false
-suc m == zero = false
-suc m == suc n = m == n
-
-_<_ : Nat -> Nat -> Bool
-m < n = (m <= n) && (notb (m == n))
-
-max : Nat -> Nat -> Nat
-max zero n = n
-max m zero = m
-max (suc m) (suc n) = suc (max m n)
-
-min : Nat -> Nat -> Nat
-min m zero = zero
-min zero n = zero
-min (suc m) (suc n) = suc (min m n)
+max = Nats.max
+min = Nats.min
 
 infixl 6 _+_ _-_
 infixl 7 _*_
 
-_+_ : Nat -> Nat -> Nat
-zero + n = n
-suc m + n = suc (m + n)
-
-_*_ : Nat -> Nat -> Nat
-zero * n = zero
-suc m * n = n + m * n
-
-_-_ : Nat -> Nat -> Nat
-zero - _ = zero
-m - zero = m
-suc m - suc n = m - n
+_+_ = Nats.add
+_*_ = Nats.mul
+_-_ = Nats.sub
 
 ----------------------------------------------------------------------
 -- List
+
+infixr 5 _::_
 
 data List A : Set where
   [] : List A
   _::_ : A -> List A -> List A
 
 module Lists where
-  map : {A B : Set} -> (A -> B) -> List A -> List B
+  map : {A : Set} -> {B : Set} -> (A -> B) -> List A -> List B
   map f [] = []
   map f (x :: xs) = f x :: map f xs
 
@@ -100,14 +131,38 @@ module Lists where
   all f [] = true
   all f (x :: l) = andb (f x) (all f l)
 
+mapL = Lists.map
+allL = Lists.all
+
+----------------------------------------------------------------------
+-- Maybe
+
+data Maybe A : Set where
+  Nothing : Maybe A
+  Just : A -> Maybe A
+
+module Maybes where
+  map : {A : Set} -> {B : Set} -> (A -> B) -> Maybe A -> Maybe B
+  map f Nothing = Nothing
+  map f (Just x) = Just (f x)
+
+mapM = Maybes.map
+
 ----------------------------------------------------------------------
 -- Products
 
 data And A B : Set where
   _,_ : A -> B -> And A B
 
+infixr 2 _&_
 _&_ : Set -> Set -> Set
 A & B = And A B
+
+fst : {A : Set} -> {B : Set} -> And A B -> A
+fst (a , b) = a
+
+snd : {A : Set} -> {B : Set} -> And A B -> B
+snd (a , b) = b
 
 ----------------------------------------------------------------------
 -- Fins
@@ -116,22 +171,24 @@ data Fin : Nat -> Set where
   zero : {n : Nat} -> Fin (suc n)
   suc : {n : Nat} -> Fin n -> Fin (suc n)
 
-toNat : {n : Nat} -> Fin n -> Nat
-toNat zero = zero
-toNat (suc f) = suc (toNat f)
+module Fins where
+  toNat : {n : Nat} -> Fin n -> Nat
+  toNat zero = zero
+  toNat (suc f) = suc (toNat f)
+
+toNatF = Fins.toNat
 
 ----------------------------------------------------------------------
 -- Vectors
-
-infixr 5 _::_
 
 data Vec A : Nat -> Set where
   [] : Vec A zero
   _::_ : {n : Nat} -> A -> Vec A n -> Vec A (suc n)
 
-lookup : {A : Set} -> {n : Nat} -> Vec A n -> Fin n -> A
-lookup (x :: _) zero = x
-lookup (_ :: xs) (suc i) = lookup xs i
+module Vecs where
+  lookup : {A : Set} -> {n : Nat} -> Vec A n -> Fin n -> A
+  lookup (x :: _) zero = x
+  lookup (_ :: xs) (suc i) = lookup xs i
 
 ----------------------------------------------------------------------
 -- Eithers (Unions)
@@ -167,11 +224,3 @@ isTrue false = Empty
 isFalse : Bool -> Set
 isFalse true = Empty
 isFalse false = Unit
-
-----------------------------------------------------------------------
--- Maybe
-
-data Maybe A : Set where
-  Nothing : Maybe A
-  Just : A -> Maybe A
-
