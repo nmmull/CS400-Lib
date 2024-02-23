@@ -38,15 +38,17 @@ module Bools where
 
 notb = Bools.not
 andb = Bools.and
-eqb = Bools.eq
 orb = Bools.or
+eqb = Bools.eq
 xorb = Bools.xor
 
-infixr 5 _orb_
+infixr 5 _OR_
 infixr 6 _&&_
+infixr 4 _==b_
 
 _&&_ = Bools.and
-_orb_ = Bools.or
+_OR_ = Bools.or
+_==b_ = Bools.eq
 
 ----------------------------------------------------------------------
 -- Natural Numbers
@@ -129,10 +131,22 @@ module Lists where
 
   all : {A : Set} -> (A -> Bool) -> List A -> Bool
   all f [] = true
-  all f (x :: l) = andb (f x) (all f l)
+  all f (x :: l) = (f x) && (all f l)
+
+  any : {A : Set} -> (A -> Bool) -> List A -> Bool
+  any f [] = false
+  any f (x :: xs) = (f x) OR (any f xs)
+
+  append : {A : Set} -> List A -> List A -> List A
+  append [] l = l
+  append (x :: xs) l = x :: append xs l
 
 mapL = Lists.map
 allL = Lists.all
+anyL = Lists.any
+
+infixr 5 _++_
+_++_ = Lists.append
 
 ----------------------------------------------------------------------
 -- Maybe
@@ -197,6 +211,9 @@ data Or A B : Set where
   left : A -> Or A B
   right : B -> Or A B
 
+Either : Set -> Set -> Set
+Either = Or
+
 ----------------------------------------------------------------------
 -- Propositional Equality
 
@@ -217,10 +234,10 @@ record Unit : Set where
 ----------------------------------------------------------------------
 -- Decidability
 
-isTrue : Bool -> Set
-isTrue true = Unit
-isTrue false = Empty
+IsTrue : Bool -> Set
+IsTrue true = Unit
+IsTrue false = Empty
 
-isFalse : Bool -> Set
-isFalse true = Empty
-isFalse false = Unit
+IsFalse : Bool -> Set
+IsFalse true = Empty
+IsFalse false = Unit
