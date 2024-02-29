@@ -1,0 +1,13 @@
+{
+  "name": "LAMR dev container",
+
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  "customizations": {
+    "vscode" : {
+      "extensions" : [ "banacorn.agda-mode" ]
+    }
+  }
+}
