@@ -1,9 +1,7 @@
 {
   "name": "TTMR dev container",
-
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
+  "build": { "dockerfile": "Dockerfile" },
+  "workspaceFolder": "/home",
 
   "customizations": {
     "vscode" : {
