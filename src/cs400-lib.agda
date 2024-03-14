@@ -36,19 +36,21 @@ module Bools where
   infix 4 _==_
   _==_ = eq
 
-notb = Bools.not
-andb = Bools.and
-orb = Bools.or
-eqb = Bools.eq
-xorb = Bools.xor
+notB = Bools.not
+andB = Bools.and
+orB = Bools.or
+eqB = Bools.eq
+xorB = Bools.xor
 
-infixr 5 _OR_
-infixr 6 _&&_
-infixr 4 _==b_
-
+infixr 5 _\/_ _||_
+infixr 6 _&&_ _/\_
+infixr 4 _==B_
+~ = Bools.not
 _&&_ = Bools.and
-_OR_ = Bools.or
-_==b_ = Bools.eq
+_/\_ = Bools.and
+_\/_ = Bools.or
+_||_ = Bools.or
+_==B_ = Bools.eq
 
 ----------------------------------------------------------------------
 -- Natural Numbers
@@ -65,8 +67,10 @@ module Nats where
   eq (suc n) zero = false
   eq (suc m) (suc n) = eq m n
 
+  _==_ = eq
+
   neq : Nat -> Nat -> Bool
-  neq m n = notb (eq m n)
+  neq m n = ~ (eq m n)
 
   leq : Nat -> Nat -> Bool
   leq zero n = true
@@ -99,18 +103,14 @@ module Nats where
   sub (suc m) zero = (suc m)
   sub (suc m) (suc n) = sub m n
 
-infix 4 _<_ _<=_ _==_
-
-_==_ = Nats.eq
-_<=_ = Nats.leq
-_<_ = Nats.lt
-
 max = Nats.max
 min = Nats.min
 
+infix 4 _<_ _<=_
 infixl 6 _+_ _-_
 infixl 7 _*_
-
+_<=_ = Nats.leq
+_<_ = Nats.lt
 _+_ = Nats.add
 _*_ = Nats.mul
 _-_ = Nats.sub
@@ -119,7 +119,6 @@ _-_ = Nats.sub
 -- List
 
 infixr 5 _::_
-
 data List A : Set where
   [] : List A
   _::_ : A -> List A -> List A
@@ -135,7 +134,7 @@ module Lists where
 
   any : {A : Set} -> (A -> Bool) -> List A -> Bool
   any f [] = false
-  any f (x :: xs) = (f x) OR (any f xs)
+  any f (x :: xs) = (f x) \/ (any f xs)
 
   append : {A : Set} -> List A -> List A -> List A
   append [] l = l
@@ -165,6 +164,8 @@ mapM = Maybes.map
 ----------------------------------------------------------------------
 -- Products
 
+infixr 4 _,_
+
 data And A B : Set where
   _,_ : A -> B -> And A B
 
@@ -177,6 +178,16 @@ fst (a , b) = a
 
 snd : {A : Set} -> {B : Set} -> And A B -> B
 snd (a , b) = b
+
+----------------------------------------------------------------------
+-- Eithers (Unions)
+
+data Or A B : Set where
+  left : A -> Or A B
+  right : B -> Or A B
+
+Either : Set -> Set -> Set
+Either = Or
 
 ----------------------------------------------------------------------
 -- Fins
@@ -204,15 +215,7 @@ module Vecs where
   lookup (x :: _) zero = x
   lookup (_ :: xs) (suc i) = lookup xs i
 
-----------------------------------------------------------------------
--- Eithers (Unions)
-
-data Or A B : Set where
-  left : A -> Or A B
-  right : B -> Or A B
-
-Either : Set -> Set -> Set
-Either = Or
+lookupV = Vecs.lookup
 
 ----------------------------------------------------------------------
 -- Propositional Equality
