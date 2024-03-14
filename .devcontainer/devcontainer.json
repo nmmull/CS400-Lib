@@ -1,6 +1,5 @@
 {
   "name": "TTMR dev container",
-  // based on LAMR dev container
 
   "build": {
     "dockerfile": "Dockerfile"
