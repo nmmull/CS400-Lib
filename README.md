@@ -22,22 +22,21 @@ the course into your file.
 ## Github Codespace
 
 If you have trouble setting up this library, or just want to try it
-out without setting it up, you can create a GitHub codespace at this
-repo
-[here](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=755165974&skip_quickstart=true&machine=standardLinux32gb&devcontainer_path=.devcontainer%2Fdevcontainer.json&geo=UsEast).
+out without setting it up, you can create a GitHub Codespace at this
+repository by going to
+[this link](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=755165974&skip_quickstart=true&machine=standardLinux32gb&devcontainer_path=.devcontainer%2Fdevcontainer.json&geo=UsEast).
 Make sure you are using the `TTMR dev container` configuration (and
 though not necessary, I recommend using the 4-core Machine type).
 
 This will take a while to build, but once it's done, you'll be dropped
-into a home directory, from which you can create agda files and use
-`open import CS400-Lib` as above.
+into a home directory, from which you can create agda files and include `open import CS400-Lib` as above.
 
-This should not be a long term solution, but if you finding yourself
-using this codespace frequently, you should run
+This should not be a long-term solution, but if you finding yourself
+using this Codespace frequently, you should run
 
 ```
 git -C /workspaces/CS400-Lib/ pull
 ```
 
-any time you open the codespace to make sure you're working with the
-most up-to-date version of the library.
+any time you open it to make sure you're working with the most
+up-to-date version of the library.
