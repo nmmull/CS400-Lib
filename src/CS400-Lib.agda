@@ -240,11 +240,11 @@ cong f refl = refl
 =P-trans : {A : Set} {x y z : A} -> (x =P y) -> (y =P z) -> (x =P z)
 =P-trans refl refl = refl
 
-_equals_by[_] : {A : Set} -> (x y : A) -> x =P y -> x =P y
-x equals y by[ eq ] = eq
+_=P_by[_] : {A : Set} -> (x y : A) -> x =P y -> x =P y
+x =P y by[ eq ] = eq
 
-_which-equals_by[_] : {A : Set} -> {x y : A} -> x =P y -> (z : A) -> y =P z -> x =P z
-x=y which-equals z by[ eq ] = =P-trans x=y eq
+_&=_by[_] : {A : Set} -> {x y : A} -> x =P y -> (z : A) -> y =P z -> x =P z
+x=y &= z by[ eq ] = =P-trans x=y eq
 ----------------------------------------------------------------------
 -- Empty
 
