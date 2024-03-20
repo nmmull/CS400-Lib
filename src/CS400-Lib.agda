@@ -42,15 +42,13 @@ orB = Bools.or
 eqB = Bools.eq
 xorB = Bools.xor
 
-infixr 5 _\/_ _||_
-infixr 6 _&&_ _/\_
-infixr 4 _==B_
+infixr 5 _||_
+infixr 6 _&&_
+infixr 4 _=B_
 ~ = Bools.not
 _&&_ = Bools.and
-_/\_ = Bools.and
-_\/_ = Bools.or
 _||_ = Bools.or
-_==B_ = Bools.eq
+_=B_ = Bools.eq
 
 
 ----------------------------------------------------------------------
@@ -107,9 +105,10 @@ module Nats where
 max = Nats.max
 min = Nats.min
 
-infix 4 _<_ _<=_
+infix 4 _<_ _<=_ _=N_
 infixl 6 _+_ _-_
 infixl 7 _*_
+_=N_ = Nats.eq
 _<=_ = Nats.leq
 _<_ = Nats.lt
 _+_ = Nats.add
@@ -135,7 +134,7 @@ module Lists where
 
   any : {A : Set} -> (A -> Bool) -> List A -> Bool
   any f [] = false
-  any f (x :: xs) = (f x) \/ (any f xs)
+  any f (x :: xs) = (f x) || (any f xs)
 
   append : {A : Set} -> List A -> List A -> List A
   append [] l = l
@@ -174,6 +173,9 @@ infixr 2 _&_
 _&_ : Set -> Set -> Set
 A & B = And A B
 
+infixr 2 _/\_
+_/\_ = _&_
+
 fst : {A : Set} -> {B : Set} -> And A B -> A
 fst (a , b) = a
 
@@ -189,6 +191,13 @@ data Or A B : Set where
 
 Either : Set -> Set -> Set
 Either = Or
+
+infixr 3 _\/_
+_\/_ = Or
+
+case : {A B C : Set} -> A \/ B -> (A -> C) -> (B -> C) -> C
+case (left x) f g = f x
+case (right x) f g = g x
 
 ----------------------------------------------------------------------
 -- Fins
@@ -221,19 +230,48 @@ lookupV = Vecs.lookup
 ----------------------------------------------------------------------
 -- Propositional Equality
 
+infix 4 _=P_
 data _=P_ {A : Set} (x : A) : A -> Set where
   instance refl : x =P x
 
+cong : {A B : Set} {x y : A} (f : A -> B) -> x =P y -> f x =P f y
+cong f refl = refl
+
+=P-trans : {A : Set} {x y z : A} -> (x =P y) -> (y =P z) -> (x =P z)
+=P-trans refl refl = refl
+
+_equals_by[_] : {A : Set} -> (x y : A) -> x =P y -> x =P y
+x equals y by[ eq ] = eq
+
+_which-equals_by[_] : {A : Set} -> {x y : A} -> x =P y -> (z : A) -> y =P z -> x =P z
+x=y which-equals z by[ eq ] = =P-trans x=y eq
 ----------------------------------------------------------------------
 -- Empty
 
 data Empty : Set where
+
+False : Set
+False = Empty
+
+Not : Set -> Set
+Not A = A -> Empty
 
 ----------------------------------------------------------------------
 -- Unit
 
 record Unit : Set where
   instance constructor unit
+
+True : Set
+True = Unit
+
+----------------------------------------------------------------------
+-- Existential Quantification
+
+data Exists {A : Set} (P : A -> Set) : Set where
+  wit : (x : A) -> (prf : P x) -> Exists P
+
+syntax Exists (\x -> B) = [ x ] B
 
 ----------------------------------------------------------------------
 -- Decidability
