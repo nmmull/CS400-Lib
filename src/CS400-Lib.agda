@@ -234,15 +234,23 @@ infix 4 _=P_
 data _=P_ {A : Set} (x : A) : A -> Set where
   instance refl : x =P x
 
-cong : {A B : Set} {x y : A} (f : A -> B) -> x =P y -> f x =P f y
-cong f refl = refl
+=P-cong : {A B : Set} {x y : A} (f : A -> B) -> x =P y -> f x =P f y
+=P-cong f refl = refl
 
-=P-trans : {A : Set} {x y z : A} -> (x =P y) -> (y =P z) -> (x =P z)
+=P-sym : {A : Set} {x y : A} -> x =P y -> y =P x
+=P-sym refl = refl
+
+=P-trans : {A : Set} {x y z : A} -> x =P y -> y =P z -> x =P z
 =P-trans refl refl = refl
 
+infixl 2 _=P=_
+_=P=_ = =P-trans
+
+infix 1 _=P_by[_]
 _=P_by[_] : {A : Set} -> (x y : A) -> x =P y -> x =P y
 x =P y by[ eq ] = eq
 
+infix 1 _&=_by[_]
 _&=_by[_] : {A : Set} -> {x y : A} -> x =P y -> (z : A) -> y =P z -> x =P z
 x=y &= z by[ eq ] = =P-trans x=y eq
 ----------------------------------------------------------------------
@@ -283,3 +291,7 @@ IsTrue false = Empty
 IsFalse : Bool -> Set
 IsFalse true = Empty
 IsFalse false = Unit
+
+IsJust : {A : Set} -> Maybe A -> Set
+IsJust Nothing = Empty
+IsJust (Just _) = Unit
