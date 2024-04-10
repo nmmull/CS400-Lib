@@ -1,6 +1,38 @@
 module CS400-Lib where
 
 ----------------------------------------------------------------------
+-- Propositional Equality
+
+infix 4 _=P_
+data _=P_ {A : Set} (x : A) : A -> Set where
+  instance refl : x =P x
+
+{-# BUILTIN EQUALITY _=P_ #-}
+
+=P-cong : {A B : Set} {x y : A} (f : A -> B) -> x =P y -> f x =P f y
+=P-cong f refl = refl
+
+=P-cong2 : {A B C : Set} {x y : A} {z w : B} (f : A -> B -> C) -> x =P y -> z =P w -> f x z =P f y w
+=P-cong2 f refl refl = refl
+
+=P-sym : {A : Set} {x y : A} -> x =P y -> y =P x
+=P-sym refl = refl
+
+=P-trans : {A : Set} {x y z : A} -> x =P y -> y =P z -> x =P z
+=P-trans refl refl = refl
+
+infixl 2 _=P=_
+_=P=_ = =P-trans
+
+infix 1 _=P_by[_]
+_=P_by[_] : {A : Set} -> (x y : A) -> x =P y -> x =P y
+x =P y by[ eq ] = eq
+
+infix 1 _&=_by[_]
+_&=_by[_] : {A : Set} -> {x y : A} -> x =P y -> (z : A) -> y =P z -> x =P z
+x=y &= z by[ eq ] = =P-trans x=y eq
+
+----------------------------------------------------------------------
 -- Booleans
 
 data Bool : Set where
@@ -49,7 +81,6 @@ infixr 4 _=B_
 _&&_ = Bools.and
 _||_ = Bools.or
 _=B_ = Bools.eq
-
 
 ----------------------------------------------------------------------
 -- Natural Numbers
@@ -114,6 +145,10 @@ _<_ = Nats.lt
 _+_ = Nats.add
 _*_ = Nats.mul
 _-_ = Nats.sub
+
+m+suc-n=suc-m+n : {m n : Nat} -> suc m + n =P m + suc n
+m+suc-n=suc-m+n {zero} = refl
+m+suc-n=suc-m+n {suc m} = =P-cong suc m+suc-n=suc-m+n
 
 ----------------------------------------------------------------------
 -- List
@@ -207,11 +242,44 @@ data Fin : Nat -> Set where
   suc : {n : Nat} -> Fin n -> Fin (suc n)
 
 module Fins where
+
+  shift : {n : Nat} -> (m p : Nat) -> Fin (m + n) -> Fin (m + (p + n))
+  shift m zero f = f
+  shift zero (suc p) f = suc (shift zero p f)
+  shift (suc m) (suc p) zero = zero
+  shift (suc m) (suc p) (suc f) = suc (shift m (suc p) f)
+
   toNat : {n : Nat} -> Fin n -> Nat
   toNat zero = zero
   toNat (suc f) = suc (toNat f)
 
+  lift : {m n : Nat} -> Fin n -> Fin (m + n)
+  lift {zero} f = f
+  lift {suc m} zero = zero
+  lift {suc m} {suc n} (suc f)
+    rewrite =P-sym (m+suc-n=suc-m+n {m} {n}) = suc (lift f)
+
+  pred : {n : Nat} -> Fin n -> Fin n
+  pred zero = zero
+  pred (suc f) = lift f
+
+  monus : {n : Nat} -> Fin n -> Fin n -> Fin n
+  monus x zero = x
+  monus zero (suc y) = zero
+  monus (suc x) (suc y) = lift (monus x y)
+
+  last : {n : Nat} -> Fin (suc n)
+  last {zero} = zero
+  last {suc n} = suc last
+
+  dual : {n : Nat} -> Fin n -> Fin n
+  dual {suc n} f = monus last f
+
 toNatF = Fins.toNat
+liftF = Fins.lift
+shiftF = Fins.shift
+lastF = Fins.last
+
 
 ----------------------------------------------------------------------
 -- Vectors
@@ -225,34 +293,47 @@ module Vecs where
   lookup (x :: _) zero = x
   lookup (_ :: xs) (suc i) = lookup xs i
 
+  lookup-rev : {A : Set} -> {n : Nat} -> Vec A n -> Fin n -> A
+  lookup-rev v f = lookup v (Fins.dual f)
+
+  map : {A B : Set} -> {n : Nat} -> (f : A -> B) (v : Vec A n) -> Vec B n
+  map f [] = []
+  map f (x :: xs) = f x :: map f xs
+
+  append : {A : Set} -> {m n : Nat} -> (u : Vec A m) -> (v : Vec A n) -> Vec A (m + n)
+  append [] v = v
+  append (x :: xs) v = x :: (append xs v)
+
 lookupV = Vecs.lookup
+mapV = Vecs.map
 
-----------------------------------------------------------------------
--- Propositional Equality
+infixl 5 _++V_
+_++V_ = Vecs.append
 
-infix 4 _=P_
-data _=P_ {A : Set} (x : A) : A -> Set where
-  instance refl : x =P x
+lookupV-mapV :
+  {A B : Set} ->
+  {n : Nat} ->
+  {f : A -> B} ->
+  {v : Vec A n} ->
+  {i : Fin n} ->
+  lookupV (mapV f v) i =P f (lookupV v i)
+lookupV-mapV {v = x :: xs} {i = zero} = refl
+lookupV-mapV {v = x :: xs} {i = suc j} = lookupV-mapV {v = xs} {i = j}
 
-=P-cong : {A B : Set} {x y : A} (f : A -> B) -> x =P y -> f x =P f y
-=P-cong f refl = refl
+lookupV-shiftF :
+  {A : Set} ->
+  {m n : Nat} ->
+  {x : A} ->
+  {u : Vec A m} ->
+  {v : Vec A n} ->
+  {i : Fin (m + n)} ->
 
-=P-sym : {A : Set} {x y : A} -> x =P y -> y =P x
-=P-sym refl = refl
+  lookupV (u ++V v) i =P lookupV (u ++V (x :: v)) (shiftF m 1 i)
 
-=P-trans : {A : Set} {x y z : A} -> x =P y -> y =P z -> x =P z
-=P-trans refl refl = refl
+lookupV-shiftF {u = []} {i = i} = refl
+lookupV-shiftF {u = x :: xs} {v} {i = zero} = refl
+lookupV-shiftF {u = x :: xs} {v} {i = suc k} = lookupV-shiftF {u = xs} {i = k}
 
-infixl 2 _=P=_
-_=P=_ = =P-trans
-
-infix 1 _=P_by[_]
-_=P_by[_] : {A : Set} -> (x y : A) -> x =P y -> x =P y
-x =P y by[ eq ] = eq
-
-infix 1 _&=_by[_]
-_&=_by[_] : {A : Set} -> {x y : A} -> x =P y -> (z : A) -> y =P z -> x =P z
-x=y &= z by[ eq ] = =P-trans x=y eq
 ----------------------------------------------------------------------
 -- Empty
 
@@ -260,6 +341,9 @@ data Empty : Set where
 
 False : Set
 False = Empty
+
+explode : {A : Set} -> Empty -> A
+explode ()
 
 Not : Set -> Set
 Not A = A -> Empty
